@@ -2,9 +2,9 @@ name: Django CI/CD
 
 on:
   push:
-    branches: [ "main" ]      # asosiy branch
+    branches: [ "master" ]      # asosiy branch
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 env:
   PYTHON_VERSION: "3.12"      # kerakli Python versiyasi
