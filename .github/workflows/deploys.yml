@@ -1,49 +1,35 @@
-name: Django CI/CD
+name: Django CI/CD
 
 on:
   push:
-    branches: [ "master" ]      # asosiy branch
-  pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 env:
-  PYTHON_VERSION: "3.12"      # kerakli Python versiyasi
+  PYTHON_VERSION: "3.12"
   DJANGO_SETTINGS_MODULE: crm.settings
 
 jobs:
-  # 1) TEST (CI)
   build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}‑pip‑${{ env.PYTHON_VERSION }}‑${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}‑pip‑${{ env.PYTHON_VERSION }}‑
-
-      - name: Install dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests
-        env:
-          DATABASE_URL: sqlite:///test.sqlite3   # test bazasi
+      - name: Run tests and migrations
         run: |
           python manage.py migrate --noinput
-          python manage.py test  --settings=$DJANGO_SETTINGS_MODULE
+          python manage.py test
 
-  # 2) DEPLOY (CD) — faqat main ga push bo‘lsa
   deploy:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -52,17 +38,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy via SSH
-        # oddiy, xavfsiz usul — appleboy/ssh‑action
+      - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host:     ${{ secrets.SSH_HOST }}
+          host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key:      ${{ secrets.SSH_KEY }}   # private key (PEM)
-          port:     ${{ secrets.SSH_PORT }}  # odatda 22
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
           script: |
-            set -e
-            cd /clothes_crm
+            cd /crm   # sizning loyihangiz serverda shu katalogda bo‘lishi kerak
             git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt
