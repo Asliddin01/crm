@@ -1,7 +1,7 @@
 name: Django CI/CD
 
 on:
-  push:
+  push: 
     branches: [ "main" ]      # asosiy branch 
   pull_request: 
     branches: [ "main" ]
